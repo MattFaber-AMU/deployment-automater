@@ -1,0 +1,50 @@
+# Default values for Crossword-game.
+replicaCount: 2
+
+image:
+  repository: amuappimages.azurecr.io
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+deployment:
+  configMap: crossword-game-config
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 3000
+  annotations: 
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+
+ingress:
+  host: usaon.games.amuniversal.com
+  tlssecret: crossword-game-tls-secret
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/whitelist-source-range: "207.67.20.252,40.86.103.124,40.77.105.170"  #Boley Network, AMUSTAGEAPI101, AMUAPI101
+
+resources: {}
+  # TODO: https://amuniversal.atlassian.net/browse/DT-474
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  # TODO: https://amuniversal.atlassian.net/browse/DT-477
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80

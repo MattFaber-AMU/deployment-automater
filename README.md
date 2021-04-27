@@ -9,6 +9,6 @@ automates the deployments of apps to azure
 4. Run the script, and you should be able to have those files copied over and use this over and over again for the future
 
 # Planned enhancements
-1. I would like to have a way to use relative paths instead of absolute paths
+1. Run github commands to commit and push
 2. Creating the files with the templates and the correct changes to completely automate this with a button press
 3. Possible GUI development

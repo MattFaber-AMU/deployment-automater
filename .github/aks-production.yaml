@@ -1,0 +1,93 @@
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    continue-on-error: false
+    timeout-minutes: 20
+    env:
+      docker_image_name: content-service
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Login to Azure Container Registry
+        uses: Azure/docker-login@v1
+        with:
+          login-server: amuappimages.azurecr.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build & Push Docker Image
+        run: |
+          docker build . -t amuappimages.azurecr.io/${{ env.docker_image_name }}:${{ github.sha }}
+          docker push amuappimages.azurecr.io/${{ env.docker_image_name }}:${{ github.sha }}
+
+      - name: Set target AKS cluster
+        uses: Azure/aks-set-context@v1
+        with:
+          creds: "${{ secrets.AZURE_CREDENTIALS }}"
+          cluster-name: amuaks101
+          resource-group: AMU_aks101_RG
+
+      - name: Create k8s Image Pull Secret
+        uses: Azure/k8s-create-secret@v1
+        with:
+          container-registry-url: amuappimages.azurecr.io
+          container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
+          container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+          secret-name: crossword-game-secret
+
+      - name: Login via Az module
+        uses: azure/login@v1
+        with:
+          creds: "${{ secrets.AZURE_CREDENTIALS }}"
+          enable-AzPSSession: true
+
+      - name: Create or Update Public DNS Record
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            $NewRecords = New-AzDnsRecordConfig -Cname "amuaks101-production-ingress.centralus.cloudapp.azure.com.";
+            New-AzDnsRecordSet -Name "usaon.games" -RecordType CNAME -ZoneName "amuniversal.com" -ResourceGroupName AMU_DNS_RG -Ttl 3600 -DnsRecords $NewRecords -Overwrite
+          azPSVersion: "3.1.0"
+
+      - name: Switch to production Namespace
+        run: kubectl config set-context --current --namespace=production
+
+      - name: Apply ConfigMap
+        uses: swdotcom/update-and-apply-kubernetes-configs@v1
+        with:
+          k8-config-file-paths: deployments/k8s/config-production.yaml
+
+      - name: Create valid Helm release-name
+        id: generate-release-name
+        run: |
+          release=crossword-game-${{ github.sha }}
+          release=${release::53}
+          release=$(echo ${release//[!0-9a-zA-Z]/-} | tr '[:upper:]' '[:lower:]' | sed -e 's/^-/z/' -e 's/-$/z/')
+          echo ::set-output name=result::$release
+
+      - name: Bake Helm templates
+        id: bake
+        uses: azure/k8s-bake@v1
+        with:
+          renderEngine: "helm"
+          helmChart: "./deployments/charts/"
+          releaseName: ${{steps.generate-release-name.outputs.result}}
+          helm-version: "latest"
+          overrides: |
+            image.repository:amuappimages.azurecr.io/${{ env.docker_image_name }}
+            image.tag:${{ github.sha }}
+
+      - name: Deploy to Azure
+        uses: Azure/k8s-deploy@v1
+        with:
+          namespace: production
+          manifests: ${{ steps.bake.outputs.manifestsBundle }}
+          images: |
+            amuappimages.azurecr.io/${{ env.docker_image_name }}:${{ github.sha }}
+          imagepullsecrets: |
+            crossword-game-secret
