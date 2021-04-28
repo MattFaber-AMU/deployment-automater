@@ -11,7 +11,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 deployment:
-  configMap: crossword-game-config
+  configMap: placeholder-config
 
 service:
   type: LoadBalancer
