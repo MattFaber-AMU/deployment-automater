@@ -12,6 +12,7 @@ fullnameOverride: ""
 
 deployment:
   configMap: placeholder-config
+  secret: placeholder-config-secret
 
 service:
   type: LoadBalancer
@@ -21,8 +22,8 @@ service:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 
 ingress:
-  host: usaon.games.amuniversal.com
-  tlssecret: crossword-game-tls-secret
+  host: placeholder.amuniversal.com
+  tlssecret: placeholder-tls-secret
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod

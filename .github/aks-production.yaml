@@ -9,7 +9,7 @@ jobs:
     continue-on-error: false
     timeout-minutes: 20
     env:
-      docker_image_name: content-service
+      docker_image_name: dockername 
     steps:
       - uses: actions/checkout@master
 
@@ -38,7 +38,7 @@ jobs:
           container-registry-url: amuappimages.azurecr.io
           container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
           container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-          secret-name: crossword-game-secret
+          secret-name: placeholder-secret
 
       - name: Login via Az module
         uses: azure/login@v1
@@ -90,4 +90,4 @@ jobs:
           images: |
             amuappimages.azurecr.io/${{ env.docker_image_name }}:${{ github.sha }}
           imagepullsecrets: |
-            crossword-game-secret
+            content-service-secret
