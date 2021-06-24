@@ -41,7 +41,7 @@ valuespath = "C:\\users\\mfaber\\documents\\Github\\" + \
 chartpath = "C:\\Users\\mfaber\\documents\\Github\\" + \
     reponame + "\\deployments\\Charts\Chart.yaml"
 
-# method calls
+# function calls
 fileopener(prodakspath, reponame)
 fileopener(stagepath, reponame)
 fileopener(valuespath, reponame)

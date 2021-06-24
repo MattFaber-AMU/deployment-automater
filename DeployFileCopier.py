@@ -29,7 +29,11 @@ def copygithubworkflows(projectname):
         projectname + "\\.github\\workflows"
     copy_tree(fromdirectory, todirectory)
 
+reponame = ""
 
-helmcopy("sudoku_game")
-k8scopy("sudoku_game")
-copygithubworkflows("sudoku_game")
+helmcopy(reponame)
+k8scopy(reponame)
+copygithubworkflows(reponame)
+
+
+
